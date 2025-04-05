@@ -26,26 +26,35 @@ router.post('/register', async (req, res) => {
 });
 
 // Login User
-router.post('/login',async (req, res) => {
+router.post('/login', async (req, res) => {
     const { email, password } = req.body;
-
+  
     try {
-        const user=await User.findOne({email:email});
-        if(!user){
-            throw new Error("Invalid credentials");
-        }
-        const hashpassword=await bcrypt.compare(password,user.password)
-        if(hashpassword){
-            const token=await jwt.sign({_id:user._id},process.env.JWT_SECRET);
-            res.cookie("token",token);
-            res.send("login successfully");
-        }
-        else{
-            throw new Error("Invalid Credentials")
-        }
+      const user = await User.findOne({ email });
+      if (!user) {
+        throw new Error("Invalid credentials");
+      }
+  
+      const hashpassword = await bcrypt.compare(password, user.password);
+      if (hashpassword) {
+        const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET);
+        res.cookie("token", token, {
+            httpOnly: false,
+            sameSite: "Lax",
+            path: "/", 
+
+
+            maxAge: 24 * 60 * 60 * 1000
+        });
+          
+        res.status(200).json({ message: "Login successful" });
+      } else {
+        throw new Error("Invalid Credentials");
+      }
     } catch (error) {
-        res.status(400).json({ message: error.message });
+      res.status(400).json({ message: error.message });
     }
-});
+  });
+  
 
 module.exports = router;
